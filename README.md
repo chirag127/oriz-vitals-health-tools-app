@@ -1,22 +1,34 @@
-# Oriz Vitals — Health + Fitness Calculators
+# Oriz Vitals — Health tools
 
-Health and fitness calculators — BMI, BMR, TDEE, body fat, macros, heart-rate zones, and more. Everything runs client-side in your browser as pure JavaScript — no personal health information (PHI) is ever stored or transmitted.
+> Health and fitness calculators — BMI, BMR, TDEE, body fat, macros, heart-rate zones, and more.
 
-**Live:** https://health.oriz.in
+**Live at**: <https://health.oriz.in> · **Status**: scaffold
 
-## Brand
+## What this is
 
-**Vitals** is the health-metrics product in the Oriz family. The name signals what the app does: compute the numbers that describe your body and training — the vitals — without ever shipping them off your device.
+Vitals computes the numbers that describe your body and training — without ever shipping them off your device. All formulas evaluate locally in the browser; no personal health information is stored or transmitted.
 
-## Stack
+## Per-feature inventory
 
-- **Astro 6** — static-first site framework, islands architecture
-- **React 19** — interactive islands for the calculator UIs
-- **Tailwind v4** — utility-first styling
-- **Pure JavaScript** — all formulas evaluated locally, no API calls
+| Feature                     | Status     |
+| --------------------------- | ---------- |
+| (tools not yet implemented) | 📜 planned |
 
-No PHI is stored. Calculations are performed entirely in your browser.
+## App-specific env vars
+
+None beyond the family-wide set at `templates/.env.example`.
+
+## Local dev
+
+```bash
+# from the workspace root (c:/D/oriz)
+pnpm -F oriz-vitals-health-tools-app dev
+```
+
+## Knowledge
+
+See [`./knowledge/`](./knowledge/) for app-specific decisions, runbooks, and services. Family rules / decisions / architecture live at the master repo's [`knowledge/`](../../../../knowledge/).
 
 ## License
 
-Source-available, all rights reserved. See [LICENSE](./LICENSE).
+Source-available, all rights reserved. See master [`LICENSE`](../../../../LICENSE) — same terms across the family.
