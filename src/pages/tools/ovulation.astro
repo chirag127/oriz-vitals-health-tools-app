@@ -1,38 +1,129 @@
 ---
 import BaseLayout from '~/layouts/BaseLayout.astro'
 ---
-<BaseLayout title="ovulation tracker — Oriz Vitals" description="ovulation tracker — runs in your browser. Part of Oriz Vitals.">
+<BaseLayout title="Ovulation Tracker — Oriz Vitals" description="Estimate ovulation day and fertile window from your last period and cycle length. Runs entirely in your browser.">
   <article class="tool">
     <p class="back mono"><a href="/">← all tools</a></p>
-    <h1 class="h1">ovulation tracker</h1>
-    <p class="status mono">coming · v0.1</p>
-    <p class="lede">
-      This feature is on the v0.1 roadmap. The page exists so we can iterate on
-      the design and copy in parallel; the implementation lands next sprint.
-    </p>
+    <h1 class="h1">Ovulation Tracker</h1>
+    <p class="status mono ready">ready · v0.1</p>
+    <p class="privacy mono">All calculations run in your browser. Nothing is sent to any server.</p>
+    <p class="lede">Estimate your ovulation day and fertile window using the calendar method. Ovulation typically occurs 14 days before the next period; the fertile window covers the 5 days before plus the day of ovulation.</p>
+
+    <form class="calc-form" id="ovu-form" novalidate>
+      <div class="field">
+        <label for="lmp">First day of last period</label>
+        <input type="date" id="lmp" name="lmp" required />
+      </div>
+      <div class="field">
+        <label for="cycle">Average cycle length (days)</label>
+        <input type="number" id="cycle" name="cycle" min="20" max="45" step="1" value="28" required />
+      </div>
+      <button type="submit" class="btn">Estimate</button>
+      <p class="err mono" id="err" role="alert"></p>
+    </form>
+
+    <div class="result hidden" id="ovu-result" aria-live="polite">
+      <div class="result-main">
+        <span class="result-label mono">Most likely ovulation day</span>
+        <span class="result-value" id="ovu-day">—</span>
+      </div>
+      <div class="result-details">
+        <p><span class="mono">Fertile window:</span> <span id="window">—</span></p>
+        <p><span class="mono">Next period (est):</span> <span id="next-period">—</span></p>
+        <p><span class="mono">Best chance of conception:</span> <span id="peak">—</span></p>
+      </div>
+
+      <h2 class="h2">Next three cycles</h2>
+      <ul class="cycles mono" id="cycles"></ul>
+
+      <p class="disclaimer mono">Calendar estimates are imprecise; cycle variation, illness, and stress shift ovulation. Track basal body temperature or LH for higher accuracy.</p>
+    </div>
   </article>
 </BaseLayout>
 
 <style>
-  .tool { padding-block: 0 2rem; }
+  .tool { padding-block: 0 2rem; max-width: 56ch; }
   .back { font-size: 12px; margin: 0 0 2rem; }
   .back a { color: var(--muted); text-decoration: none; }
   .back a:hover { color: var(--ink); }
   .h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.75rem, 4vw, 2.5rem); margin: 0 0 0.5rem; line-height: 1.1; }
-  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 2rem; }
+  .h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.125rem; margin: 1.5rem 0 0.5rem; }
+  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 0.5rem; }
   .status.ready { color: var(--accent); }
-  .lede { font-size: 1rem; color: var(--muted); line-height: 1.6; max-width: 56ch; }
-  .placeholder { max-width: 60ch; }
-  .placeholder p { color: var(--muted); margin: 0 0 1rem; }
-  .io {
-    width: 100%;
-    padding: 1rem;
-    background: var(--paper-2);
-    border: 1px solid var(--rule);
-    color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    resize: vertical;
+  .privacy { font-size: 11px; color: var(--muted); margin: 0 0 1.5rem; letter-spacing: 0.02em; border-left: 2px solid var(--rule); padding-left: 0.75rem; }
+  .lede { font-size: 0.9375rem; color: var(--muted); line-height: 1.6; margin: 0 0 1.5rem; }
+  .calc-form { display: flex; flex-direction: column; gap: 1rem; }
+  .field { display: flex; flex-direction: column; gap: 0.375rem; }
+  .field label { font-size: 0.8125rem; font-weight: 500; color: var(--muted); }
+  .field input {
+    padding: 0.625rem 0.75rem; background: var(--paper-2); border: 1px solid var(--rule);
+    color: var(--ink); font-family: var(--font-mono); font-size: 0.9375rem; outline: none;
   }
-  .hint { font-size: 11px; color: var(--muted); margin-top: 0.75rem; }
+  .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 20%, transparent); }
+  .btn {
+    align-self: flex-start; padding: 0.625rem 1.5rem;
+    background: var(--ink); color: var(--paper); border: none;
+    font-family: var(--font-display); font-size: 0.9375rem; font-weight: 500;
+    cursor: pointer; transition: opacity 120ms;
+  }
+  .btn:hover { opacity: 0.85; }
+  .err { color: var(--accent); font-size: 12px; margin: 0; min-height: 1em; }
+  .result { margin-top: 2rem; border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+  .result.hidden { display: none; }
+  .result-main { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem; }
+  .result-label { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .result-value { font-family: var(--font-display); font-size: 2rem; color: var(--ink); line-height: 1.1; }
+  .result-details p { font-size: 0.875rem; color: var(--muted); margin: 0 0 0.375rem; }
+  .result-details .mono { color: var(--ink); }
+  .cycles { list-style: none; padding: 0; margin: 0; font-size: 0.8125rem; color: var(--muted); }
+  .cycles li { padding: 0.5rem 0; border-bottom: 1px solid var(--rule); }
+  .disclaimer { font-size: 11px; color: var(--muted); margin: 1rem 0 0; }
 </style>
+
+<script>
+  const form = document.getElementById('ovu-form') as HTMLFormElement
+  const errEl = document.getElementById('err')!
+  const resultEl = document.getElementById('ovu-result')!
+  const ovuDayEl = document.getElementById('ovu-day')!
+  const windowEl = document.getElementById('window')!
+  const nextPeriodEl = document.getElementById('next-period')!
+  const peakEl = document.getElementById('peak')!
+  const cyclesEl = document.getElementById('cycles')!
+
+  const fmt = (d: Date) => d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    errEl.textContent = ''
+    const lmpStr = (document.getElementById('lmp') as HTMLInputElement).value
+    const cycle = parseInt((document.getElementById('cycle') as HTMLInputElement).value, 10)
+    if (!lmpStr) { errEl.textContent = 'Please enter the start of your last period.'; return }
+    if (!cycle || cycle < 20 || cycle > 45) { errEl.textContent = 'Cycle length must be 20–45 days.'; return }
+    const lmp = new Date(lmpStr + 'T00:00:00')
+    if (isNaN(lmp.getTime())) { errEl.textContent = 'Invalid date.'; return }
+
+    const ovulation = addDays(lmp, cycle - 14)
+    const fertileStart = addDays(ovulation, -5)
+    const fertileEnd = ovulation
+    const nextPeriod = addDays(lmp, cycle)
+    const peakStart = addDays(ovulation, -2)
+    const peakEnd = ovulation
+
+    ovuDayEl.textContent = fmt(ovulation)
+    windowEl.textContent = `${fmt(fertileStart)} – ${fmt(fertileEnd)}`
+    nextPeriodEl.textContent = fmt(nextPeriod)
+    peakEl.textContent = `${fmt(peakStart)} – ${fmt(peakEnd)}`
+
+    cyclesEl.innerHTML = ''
+    for (let i = 1; i <= 3; i++) {
+      const cLmp = addDays(lmp, cycle * i)
+      const cOvu = addDays(cLmp, cycle - 14)
+      const cStart = addDays(cOvu, -5)
+      const li = document.createElement('li')
+      li.textContent = `Cycle ${i + 1}: period ${fmt(cLmp)} · ovulation ~${fmt(cOvu)} · fertile ${fmt(cStart)}–${fmt(cOvu)}`
+      cyclesEl.appendChild(li)
+    }
+    resultEl.classList.remove('hidden')
+  })
+</script>

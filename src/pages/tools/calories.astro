@@ -1,38 +1,130 @@
 ---
 import BaseLayout from '~/layouts/BaseLayout.astro'
 ---
-<BaseLayout title="calorie + macro split — Oriz Vitals" description="calorie + macro split — runs in your browser. Part of Oriz Vitals.">
+<BaseLayout title="Calorie Burned Calculator — Oriz Vitals" description="Calculate calories burned by activity type, duration, and body weight. Runs entirely in your browser.">
   <article class="tool">
     <p class="back mono"><a href="/">← all tools</a></p>
-    <h1 class="h1">calorie + macro split</h1>
-    <p class="status mono">coming · v0.1</p>
-    <p class="lede">
-      This feature is on the v0.1 roadmap. The page exists so we can iterate on
-      the design and copy in parallel; the implementation lands next sprint.
-    </p>
+    <h1 class="h1">Calorie Burned Calculator</h1>
+    <p class="status mono ready">ready · v0.1</p>
+    <p class="privacy mono">All calculations run in your browser. Nothing is sent to any server.</p>
+
+    <form class="calc-form" id="cal-form" novalidate>
+      <div class="field">
+        <label for="cal-weight">Body weight</label>
+        <div class="input-group">
+          <input type="number" id="cal-weight" min="20" max="300" step="0.1" placeholder="70" required />
+          <select id="cal-weight-unit">
+            <option value="kg" selected>kg</option>
+            <option value="lbs">lbs</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="cal-activity">Activity</label>
+        <select id="cal-activity">
+          <optgroup label="Cardio">
+            <option value="7" data-label="Running (moderate, ~8 min/km)">Running (moderate, ~8 min/km)</option>
+            <option value="11" data-label="Running (fast, ~5 min/km)">Running (fast, ~5 min/km)</option>
+            <option value="8" data-label="Cycling (moderate)">Cycling (moderate)</option>
+            <option value="12" data-label="Cycling (vigorous)">Cycling (vigorous)</option>
+            <option value="6" data-label="Swimming (moderate laps)">Swimming (moderate laps)</option>
+            <option value="5" data-label="Walking (5 km/h)">Walking (5 km/h)</option>
+            <option value="3.5" data-label="Walking (3.5 km/h)">Walking (3.5 km/h, slow)</option>
+            <option value="9" data-label="Jump rope">Jump rope</option>
+            <option value="8" data-label="Rowing (moderate)">Rowing (moderate)</option>
+          </optgroup>
+          <optgroup label="Strength & HIIT">
+            <option value="5" data-label="Weight training (moderate)">Weight training (moderate)</option>
+            <option value="8" data-label="HIIT">HIIT</option>
+            <option value="4" data-label="Yoga / Pilates">Yoga / Pilates</option>
+          </optgroup>
+          <optgroup label="Sports">
+            <option value="7" data-label="Basketball">Basketball</option>
+            <option value="8" data-label="Football / soccer">Football / soccer</option>
+            <option value="7" data-label="Tennis">Tennis</option>
+            <option value="5" data-label="Badminton">Badminton</option>
+          </optgroup>
+          <optgroup label="Daily activities">
+            <option value="2.5" data-label="Housework">Housework</option>
+            <option value="3.5" data-label="Gardening">Gardening</option>
+            <option value="2" data-label="Cooking">Cooking</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="field">
+        <label for="cal-duration">Duration (minutes)</label>
+        <input type="number" id="cal-duration" min="1" max="600" step="1" placeholder="30" required />
+      </div>
+      <button type="submit" class="btn">Calculate</button>
+    </form>
+
+    <div class="result hidden" id="cal-result" aria-live="polite">
+      <div class="result-main">
+        <span class="result-label mono">Calories burned</span>
+        <span class="result-value" id="cal-burned">—</span>
+        <span class="result-unit mono">kcal</span>
+      </div>
+      <p id="cal-context" class="result-context"></p>
+      <p class="tip">Based on MET (Metabolic Equivalent of Task) values. Actual calories vary with fitness level, terrain, and intensity.</p>
+    </div>
   </article>
 </BaseLayout>
 
 <style>
-  .tool { padding-block: 0 2rem; }
+  .tool { padding-block: 0 2rem; max-width: 56ch; }
   .back { font-size: 12px; margin: 0 0 2rem; }
   .back a { color: var(--muted); text-decoration: none; }
   .back a:hover { color: var(--ink); }
   .h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.75rem, 4vw, 2.5rem); margin: 0 0 0.5rem; line-height: 1.1; }
-  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 2rem; }
+  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 0.5rem; }
   .status.ready { color: var(--accent); }
-  .lede { font-size: 1rem; color: var(--muted); line-height: 1.6; max-width: 56ch; }
-  .placeholder { max-width: 60ch; }
-  .placeholder p { color: var(--muted); margin: 0 0 1rem; }
-  .io {
-    width: 100%;
-    padding: 1rem;
-    background: var(--paper-2);
-    border: 1px solid var(--rule);
-    color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    resize: vertical;
-  }
-  .hint { font-size: 11px; color: var(--muted); margin-top: 0.75rem; }
+  .privacy { font-size: 11px; color: var(--muted); margin: 0 0 2rem; letter-spacing: 0.02em; border-left: 2px solid var(--rule); padding-left: 0.75rem; }
+  .calc-form { display: flex; flex-direction: column; gap: 1.25rem; }
+  .field { display: flex; flex-direction: column; gap: 0.375rem; }
+  .field label { font-size: 0.8125rem; font-weight: 500; color: var(--muted); }
+  .field input, .field select { padding: 0.625rem 0.75rem; background: var(--paper-2); border: 1px solid var(--rule); color: var(--ink); font-family: var(--font-mono); font-size: 0.875rem; }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+  .input-group { display: flex; }
+  .input-group input { flex: 1; padding: 0.625rem 0.75rem; background: var(--paper-2); border: 1px solid var(--rule); border-right: none; color: var(--ink); font-family: var(--font-mono); font-size: 0.9375rem; outline: none; min-width: 0; }
+  .input-group input:focus { border-color: var(--accent); }
+  .input-group select { padding: 0.625rem 0.5rem; background: var(--paper-2); border: 1px solid var(--rule); color: var(--muted); font-family: var(--font-mono); font-size: 0.8125rem; }
+  .btn { align-self: flex-start; padding: 0.625rem 1.5rem; background: var(--ink); color: var(--paper); border: none; font-family: var(--font-display); font-size: 0.9375rem; font-weight: 500; cursor: pointer; transition: opacity 120ms; }
+  .btn:hover { opacity: 0.85; }
+  .result { margin-top: 2rem; border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+  .result.hidden { display: none; }
+  .result-main { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+  .result-label { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .result-value { font-family: var(--font-mono); font-size: 3rem; color: var(--ink); line-height: 1; }
+  .result-unit { font-size: 0.875rem; color: var(--muted); }
+  .result-context { font-size: 0.875rem; color: var(--muted); margin: 0 0 1rem; }
+  .tip { font-size: 0.8125rem; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 0.75rem; margin: 0; }
 </style>
+
+<script>
+  const form = document.getElementById('cal-form') as HTMLFormElement
+  const resultEl = document.getElementById('cal-result')!
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    let weight = parseFloat((document.getElementById('cal-weight') as HTMLInputElement).value)
+    const weightUnit = (document.getElementById('cal-weight-unit') as HTMLSelectElement).value
+    const activitySelect = document.getElementById('cal-activity') as HTMLSelectElement
+    const met = parseFloat(activitySelect.value)
+    const duration = parseFloat((document.getElementById('cal-duration') as HTMLInputElement).value)
+
+    if (!weight || !met || !duration) return
+    if (weightUnit === 'lbs') weight = weight * 0.453592
+
+    // Calories = MET * weight(kg) * time(hours)
+    const calories = met * weight * (duration / 60)
+
+    document.getElementById('cal-burned')!.textContent = Math.round(calories).toString()
+
+    const actLabel = activitySelect.options[activitySelect.selectedIndex].text
+    const rate = Math.round(calories / (duration / 60))
+    document.getElementById('cal-context')!.textContent =
+      `${actLabel} · ${duration} min · ${rate} kcal/hr rate`
+
+    resultEl.classList.remove('hidden')
+  })
+</script>

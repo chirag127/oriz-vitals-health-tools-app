@@ -1,38 +1,154 @@
 ---
 import BaseLayout from '~/layouts/BaseLayout.astro'
 ---
-<BaseLayout title="sleep tracker — Oriz Vitals" description="sleep tracker — runs in your browser. Part of Oriz Vitals.">
+<BaseLayout title="Sleep Cycle Calculator — Oriz Vitals" description="Find ideal wake-up times aligned to your sleep cycles for complete REM rest. Runs entirely in your browser.">
   <article class="tool">
     <p class="back mono"><a href="/">← all tools</a></p>
-    <h1 class="h1">sleep tracker</h1>
-    <p class="status mono">coming · v0.1</p>
-    <p class="lede">
-      This feature is on the v0.1 roadmap. The page exists so we can iterate on
-      the design and copy in parallel; the implementation lands next sprint.
-    </p>
+    <h1 class="h1">Sleep Cycle Calculator</h1>
+    <p class="status mono ready">ready · v0.1</p>
+    <p class="privacy mono">All calculations run in your browser. Nothing is sent to any server.</p>
+
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" id="tab-bedtime" class="tab active" data-tab="bedtime">I know my bedtime</button>
+      <button role="tab" aria-selected="false" id="tab-waketime" class="tab" data-tab="waketime">I know my wake time</button>
+    </div>
+
+    <div id="panel-bedtime" class="tab-panel">
+      <form class="calc-form" id="sleep-form-bedtime" novalidate>
+        <div class="field">
+          <label for="bedtime">Bedtime</label>
+          <input type="time" id="bedtime" value="23:00" required />
+          <p class="field-hint mono">Includes ~14 min to fall asleep.</p>
+        </div>
+        <button type="submit" class="btn">Show wake-up times</button>
+      </form>
+      <div class="result hidden" id="sleep-result-bedtime" aria-live="polite">
+        <p class="result-label mono">Ideal wake-up times (complete cycles):</p>
+        <ul class="wake-list" id="wake-times"></ul>
+        <p class="tip">Waking at the end of a cycle means lighter sleep — you'll feel more refreshed.</p>
+      </div>
+    </div>
+
+    <div id="panel-waketime" class="tab-panel hidden">
+      <form class="calc-form" id="sleep-form-waketime" novalidate>
+        <div class="field">
+          <label for="waketime">Wake-up time</label>
+          <input type="time" id="waketime" value="07:00" required />
+        </div>
+        <button type="submit" class="btn">Show bedtimes</button>
+      </form>
+      <div class="result hidden" id="sleep-result-waketime" aria-live="polite">
+        <p class="result-label mono">Ideal bedtimes (complete cycles + 14 min to fall asleep):</p>
+        <ul class="wake-list" id="bed-times"></ul>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <p class="info-title mono">About sleep cycles</p>
+      <p>A full sleep cycle lasts ~90 minutes and includes NREM stages (light + deep) followed by REM. Most adults need 5–6 complete cycles (7.5–9 hours). Waking mid-cycle — especially during deep sleep — causes sleep inertia (that groggy feeling).</p>
+    </div>
   </article>
 </BaseLayout>
 
 <style>
-  .tool { padding-block: 0 2rem; }
+  .tool { padding-block: 0 2rem; max-width: 56ch; }
   .back { font-size: 12px; margin: 0 0 2rem; }
   .back a { color: var(--muted); text-decoration: none; }
   .back a:hover { color: var(--ink); }
   .h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.75rem, 4vw, 2.5rem); margin: 0 0 0.5rem; line-height: 1.1; }
-  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 2rem; }
+  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 0.5rem; }
   .status.ready { color: var(--accent); }
-  .lede { font-size: 1rem; color: var(--muted); line-height: 1.6; max-width: 56ch; }
-  .placeholder { max-width: 60ch; }
-  .placeholder p { color: var(--muted); margin: 0 0 1rem; }
-  .io {
-    width: 100%;
-    padding: 1rem;
-    background: var(--paper-2);
-    border: 1px solid var(--rule);
-    color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    resize: vertical;
-  }
-  .hint { font-size: 11px; color: var(--muted); margin-top: 0.75rem; }
+  .privacy { font-size: 11px; color: var(--muted); margin: 0 0 1.5rem; letter-spacing: 0.02em; border-left: 2px solid var(--rule); padding-left: 0.75rem; }
+  .tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 1px solid var(--rule); }
+  .tab { padding: 0.5rem 1rem; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-family: var(--font-display); font-size: 0.875rem; cursor: pointer; margin-bottom: -1px; }
+  .tab.active { color: var(--ink); border-bottom-color: var(--accent); font-weight: 500; }
+  .tab-panel.hidden { display: none; }
+  .calc-form { display: flex; flex-direction: column; gap: 1.25rem; }
+  .field { display: flex; flex-direction: column; gap: 0.375rem; }
+  .field label { font-size: 0.8125rem; font-weight: 500; color: var(--muted); }
+  .field input[type="time"] { padding: 0.625rem 0.75rem; background: var(--paper-2); border: 1px solid var(--rule); color: var(--ink); font-family: var(--font-mono); font-size: 1.125rem; max-width: 180px; }
+  .field input[type="time"]:focus { outline: none; border-color: var(--accent); }
+  .field-hint { font-size: 11px; color: var(--muted); margin: 0.25rem 0 0; }
+  .btn { align-self: flex-start; padding: 0.625rem 1.5rem; background: var(--ink); color: var(--paper); border: none; font-family: var(--font-display); font-size: 0.9375rem; font-weight: 500; cursor: pointer; transition: opacity 120ms; }
+  .btn:hover { opacity: 0.85; }
+  .result { margin-top: 2rem; }
+  .result.hidden { display: none; }
+  .result-label { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 1rem; }
+  .wake-list { list-style: none; padding: 0; margin: 0 0 1.25rem; }
+  .wake-list li { display: flex; align-items: center; gap: 1rem; padding: 0.625rem 0; border-bottom: 1px solid var(--rule); }
+  .wake-list .time { font-family: var(--font-mono); font-size: 1.5rem; color: var(--ink); min-width: 80px; }
+  .wake-list .cycles { font-size: 0.8125rem; color: var(--muted); }
+  .wake-list .hours { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--muted); margin-left: auto; }
+  .wake-list li.recommended .time { color: var(--accent); }
+  .wake-list li.recommended .cycles::after { content: ' ✓ recommended'; color: var(--accent); font-size: 10px; }
+  .tip { font-size: 0.8125rem; color: var(--muted); border-left: 2px solid var(--accent); padding-left: 0.75rem; margin: 0 0 1.5rem; }
+  .info-box { margin-top: 2rem; padding: 1rem; background: var(--paper-2); border: 1px solid var(--rule); }
+  .info-title { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.5rem; }
+  .info-box p { font-size: 0.875rem; color: var(--muted); margin: 0; line-height: 1.6; }
 </style>
+
+<script>
+  // Tab switching
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.tab')
+  const panels = document.querySelectorAll<HTMLDivElement>('.tab-panel')
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false') })
+      panels.forEach(p => p.classList.add('hidden'))
+      tab.classList.add('active')
+      tab.setAttribute('aria-selected', 'true')
+      const panelId = `panel-${tab.dataset.tab}`
+      document.getElementById(panelId)?.classList.remove('hidden')
+    })
+  })
+
+  function formatTime(date: Date): string {
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+  }
+
+  // Bedtime → wake times
+  const bedtimeForm = document.getElementById('sleep-form-bedtime') as HTMLFormElement
+  bedtimeForm.addEventListener('submit', (e) => {
+    e.preventDefault()
+    const bedtimeInput = (document.getElementById('bedtime') as HTMLInputElement).value
+    const [h, m] = bedtimeInput.split(':').map(Number)
+    const base = new Date()
+    base.setHours(h, m + 14, 0, 0) // +14 min sleep onset latency
+
+    const wakeList = document.getElementById('wake-times')!
+    wakeList.innerHTML = ''
+    for (let cycles = 3; cycles <= 6; cycles++) {
+      const wakeTime = new Date(base.getTime() + cycles * 90 * 60 * 1000)
+      const hours = (cycles * 90) / 60
+      const li = document.createElement('li')
+      if (cycles === 5 || cycles === 6) li.className = 'recommended'
+      li.innerHTML = `<span class="time">${formatTime(wakeTime)}</span><span class="cycles">${cycles} cycles</span><span class="hours">${hours.toFixed(1)} hrs</span>`
+      wakeList.appendChild(li)
+    }
+
+    document.getElementById('sleep-result-bedtime')!.classList.remove('hidden')
+  })
+
+  // Wake time → bedtimes
+  const waketimeForm = document.getElementById('sleep-form-waketime') as HTMLFormElement
+  waketimeForm.addEventListener('submit', (e) => {
+    e.preventDefault()
+    const waketimeInput = (document.getElementById('waketime') as HTMLInputElement).value
+    const [h, m] = waketimeInput.split(':').map(Number)
+    const wakeDate = new Date()
+    wakeDate.setHours(h, m, 0, 0)
+
+    const bedList = document.getElementById('bed-times')!
+    bedList.innerHTML = ''
+    for (let cycles = 6; cycles >= 3; cycles--) {
+      const bedTime = new Date(wakeDate.getTime() - cycles * 90 * 60 * 1000 - 14 * 60 * 1000)
+      const hours = (cycles * 90) / 60
+      const li = document.createElement('li')
+      if (cycles === 5 || cycles === 6) li.className = 'recommended'
+      li.innerHTML = `<span class="time">${formatTime(bedTime)}</span><span class="cycles">${cycles} cycles</span><span class="hours">${hours.toFixed(1)} hrs</span>`
+      bedList.appendChild(li)
+    }
+
+    document.getElementById('sleep-result-waketime')!.classList.remove('hidden')
+  })
+</script>

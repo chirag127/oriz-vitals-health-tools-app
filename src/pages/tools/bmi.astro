@@ -1,39 +1,172 @@
 ---
 import BaseLayout from '~/layouts/BaseLayout.astro'
 ---
-<BaseLayout title="BMI — Oriz Vitals" description="BMI — runs in your browser. Part of Oriz Vitals.">
+<BaseLayout title="BMI Calculator — Oriz Vitals" description="Calculate your Body Mass Index (BMI) and healthy weight range. Runs entirely in your browser.">
   <article class="tool">
     <p class="back mono"><a href="/">← all tools</a></p>
-    <h1 class="h1">BMI</h1>
-    <p class="status mono ready">ready · v0</p>
-    <div class="placeholder">
-      <p>This tool is wired. Drop in your input or paste below — everything stays in your browser.</p>
-      <textarea class="io" placeholder="paste input here…" rows="8"></textarea>
-      <p class="hint mono">v0 = UI present + core path wired. Full feature set lands in v0.1.</p>
+    <h1 class="h1">BMI Calculator</h1>
+    <p class="status mono ready">ready · v0.1</p>
+    <p class="privacy mono">All calculations run in your browser. Nothing is sent to any server.</p>
+
+    <form class="calc-form" id="bmi-form" novalidate>
+      <div class="field-row">
+        <div class="field">
+          <label for="weight">Weight</label>
+          <div class="input-group">
+            <input type="number" id="weight" name="weight" min="20" max="300" step="0.1" placeholder="70" required />
+            <select id="weight-unit" name="weight-unit">
+              <option value="kg" selected>kg</option>
+              <option value="lbs">lbs</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="height">Height</label>
+          <div class="input-group">
+            <input type="number" id="height" name="height" min="50" max="300" step="0.1" placeholder="175" required />
+            <select id="height-unit" name="height-unit">
+              <option value="cm" selected>cm</option>
+              <option value="in">in</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="btn">Calculate BMI</button>
+    </form>
+
+    <div class="result hidden" id="bmi-result" aria-live="polite">
+      <div class="result-main">
+        <span class="result-label mono">BMI</span>
+        <span class="result-value" id="bmi-value">—</span>
+        <span class="result-category" id="bmi-category">—</span>
+      </div>
+      <div class="result-details">
+        <p id="healthy-range"></p>
+        <p id="weight-status"></p>
+      </div>
+      <div class="bmi-scale">
+        <div class="scale-bar">
+          <div class="scale-segment underweight">Underweight<br/>&lt;18.5</div>
+          <div class="scale-segment normal">Normal<br/>18.5–24.9</div>
+          <div class="scale-segment overweight">Overweight<br/>25–29.9</div>
+          <div class="scale-segment obese">Obese<br/>≥30</div>
+        </div>
+        <div class="scale-marker" id="bmi-marker" style="display:none"></div>
+      </div>
     </div>
   </article>
 </BaseLayout>
 
 <style>
-  .tool { padding-block: 0 2rem; }
+  .tool { padding-block: 0 2rem; max-width: 56ch; }
   .back { font-size: 12px; margin: 0 0 2rem; }
   .back a { color: var(--muted); text-decoration: none; }
   .back a:hover { color: var(--ink); }
   .h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.75rem, 4vw, 2.5rem); margin: 0 0 0.5rem; line-height: 1.1; }
-  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 2rem; }
+  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 0.5rem; }
   .status.ready { color: var(--accent); }
-  .lede { font-size: 1rem; color: var(--muted); line-height: 1.6; max-width: 56ch; }
-  .placeholder { max-width: 60ch; }
-  .placeholder p { color: var(--muted); margin: 0 0 1rem; }
-  .io {
-    width: 100%;
-    padding: 1rem;
-    background: var(--paper-2);
-    border: 1px solid var(--rule);
-    color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    resize: vertical;
+  .privacy { font-size: 11px; color: var(--muted); margin: 0 0 2rem; letter-spacing: 0.02em; border-left: 2px solid var(--rule); padding-left: 0.75rem; }
+  .calc-form { display: flex; flex-direction: column; gap: 1.25rem; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .field { display: flex; flex-direction: column; gap: 0.375rem; }
+  .field label { font-size: 0.8125rem; font-weight: 500; color: var(--muted); }
+  .input-group { display: flex; gap: 0; }
+  .input-group input {
+    flex: 1; padding: 0.625rem 0.75rem;
+    background: var(--paper-2); border: 1px solid var(--rule);
+    border-right: none; color: var(--ink); font-family: var(--font-mono);
+    font-size: 0.9375rem; outline: none; min-width: 0;
   }
-  .hint { font-size: 11px; color: var(--muted); margin-top: 0.75rem; }
+  .input-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 20%, transparent); }
+  .input-group select {
+    padding: 0.625rem 0.5rem; background: var(--paper-2); border: 1px solid var(--rule);
+    color: var(--muted); font-family: var(--font-mono); font-size: 0.8125rem; cursor: pointer;
+  }
+  .btn {
+    align-self: flex-start; padding: 0.625rem 1.5rem;
+    background: var(--ink); color: var(--paper); border: none;
+    font-family: var(--font-display); font-size: 0.9375rem; font-weight: 500;
+    cursor: pointer; transition: opacity 120ms;
+  }
+  .btn:hover { opacity: 0.85; }
+  .result { margin-top: 2rem; border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+  .result.hidden { display: none; }
+  .result-main { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .result-label { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .result-value { font-family: var(--font-mono); font-size: 3rem; color: var(--ink); line-height: 1; }
+  .result-category { font-size: 1.125rem; font-weight: 500; }
+  .result-details p { font-size: 0.875rem; color: var(--muted); margin: 0 0 0.5rem; }
+  .bmi-scale { margin-top: 1.25rem; }
+  .scale-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; }
+  .scale-segment { flex: 1; display: flex; align-items: flex-end; padding-top: 10px; font-size: 9px; color: var(--muted); font-family: var(--font-mono); text-align: center; }
+  .underweight { background: #7dd3fc; }
+  .normal { background: #4ade80; }
+  .overweight { background: #facc15; }
+  .obese { background: #f87171; }
+  .scale-bar { height: 8px; }
+  .scale-segment { padding: 0; flex: 1; }
+  .scale-labels { display: flex; margin-top: 0.5rem; }
+  .scale-labels span { flex: 1; font-size: 9px; color: var(--muted); font-family: var(--font-mono); text-align: center; }
 </style>
+
+<script>
+  const form = document.getElementById('bmi-form') as HTMLFormElement
+  const resultEl = document.getElementById('bmi-result')!
+  const bmiValue = document.getElementById('bmi-value')!
+  const bmiCategory = document.getElementById('bmi-category')!
+  const healthyRange = document.getElementById('healthy-range')!
+  const weightStatus = document.getElementById('weight-status')!
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    const weightInput = (document.getElementById('weight') as HTMLInputElement).value
+    const heightInput = (document.getElementById('height') as HTMLInputElement).value
+    const weightUnit = (document.getElementById('weight-unit') as HTMLSelectElement).value
+    const heightUnit = (document.getElementById('height-unit') as HTMLSelectElement).value
+
+    let weightKg = parseFloat(weightInput)
+    let heightCm = parseFloat(heightInput)
+    if (!weightKg || !heightCm) return
+
+    if (weightUnit === 'lbs') weightKg = weightKg * 0.453592
+    if (heightUnit === 'in') heightCm = heightCm * 2.54
+
+    const heightM = heightCm / 100
+    const bmi = weightKg / (heightM * heightM)
+
+    let category = ''
+    let categoryColor = ''
+    if (bmi < 18.5) { category = 'Underweight'; categoryColor = '#0369a1'; }
+    else if (bmi < 25) { category = 'Normal weight'; categoryColor = '#15803d'; }
+    else if (bmi < 30) { category = 'Overweight'; categoryColor = '#a16207'; }
+    else { category = 'Obese'; categoryColor = '#b91c1c'; }
+
+    const healthyMinKg = 18.5 * heightM * heightM
+    const healthyMaxKg = 24.9 * heightM * heightM
+
+    let rangeStr = ''
+    if (weightUnit === 'lbs') {
+      rangeStr = `${(healthyMinKg / 0.453592).toFixed(1)}–${(healthyMaxKg / 0.453592).toFixed(1)} lbs`
+    } else {
+      rangeStr = `${healthyMinKg.toFixed(1)}–${healthyMaxKg.toFixed(1)} kg`
+    }
+
+    bmiValue.textContent = bmi.toFixed(1)
+    bmiCategory.textContent = category
+    bmiCategory.style.color = categoryColor
+    healthyRange.textContent = `Healthy weight range for your height: ${rangeStr}`
+
+    const diff = weightKg - ((healthyMinKg + healthyMaxKg) / 2)
+    if (Math.abs(diff) < 0.5) {
+      weightStatus.textContent = 'You are right in the middle of the healthy range.'
+    } else if (diff < 0) {
+      const diffDisplay = weightUnit === 'lbs' ? `${(Math.abs(diff) / 0.453592).toFixed(1)} lbs` : `${Math.abs(diff).toFixed(1)} kg`
+      weightStatus.textContent = `${diffDisplay} below the midpoint of the healthy range.`
+    } else {
+      const diffDisplay = weightUnit === 'lbs' ? `${(diff / 0.453592).toFixed(1)} lbs` : `${diff.toFixed(1)} kg`
+      weightStatus.textContent = `${diffDisplay} above the midpoint of the healthy range.`
+    }
+
+    resultEl.classList.remove('hidden')
+  })
+</script>

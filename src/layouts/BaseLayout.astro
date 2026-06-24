@@ -1,5 +1,6 @@
 ---
 import '~/styles/global.css'
+import FamilySidebar from '@chirag127/astro-shell/components/FamilySidebar.astro'
 
 interface Props {
   title?: string
@@ -38,7 +39,23 @@ const canonical = new URL(Astro.url.pathname, 'https://vitals.oriz.in').toString
         <a href="https://account.oriz.in/sign-in">sign in</a>
       </nav>
     </header>
-    <main id="main"><slot /></main>
+    <div class="oriz-shell">
+      <FamilySidebar slug="oriz-vitals-health-tools-app" title="Vitals Tools">
+        <a slot="tools" href="/tools/bmi/">BMI</a>
+        <a slot="tools" href="/tools/bmr/">BMR</a>
+        <a slot="tools" href="/tools/tdee/">TDEE</a>
+        <a slot="tools" href="/tools/body-fat/">Body Fat %</a>
+        <a slot="tools" href="/tools/calories/">Calories & Macros</a>
+        <a slot="tools" href="/tools/water/">Water Intake</a>
+        <a slot="tools" href="/tools/steps/">Steps</a>
+        <a slot="tools" href="/tools/sleep/">Sleep</a>
+        <a slot="tools" href="/tools/heart-rate/">Heart Rate Zones</a>
+        <a slot="tools" href="/tools/pregnancy/">Pregnancy Due Date</a>
+        <a slot="tools" href="/tools/ovulation/">Ovulation</a>
+        <a slot="tools" href="/tools/period/">Period Tracker</a>
+      </FamilySidebar>
+      <main id="main" class="oriz-main"><slot /></main>
+    </div>
     <footer class="site">
       <span>Oriz Vitals · part of the <a href="https://oriz.in">oriz</a> family · runs in your browser</span>
       <span>

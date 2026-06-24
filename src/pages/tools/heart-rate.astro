@@ -1,38 +1,141 @@
 ---
 import BaseLayout from '~/layouts/BaseLayout.astro'
 ---
-<BaseLayout title="heart-rate zones — Oriz Vitals" description="heart-rate zones — runs in your browser. Part of Oriz Vitals.">
+<BaseLayout title="Heart Rate Zones — Oriz Vitals" description="Calculate your 5 heart rate training zones from your max HR or age. Runs entirely in your browser.">
   <article class="tool">
     <p class="back mono"><a href="/">← all tools</a></p>
-    <h1 class="h1">heart-rate zones</h1>
-    <p class="status mono">coming · v0.1</p>
-    <p class="lede">
-      This feature is on the v0.1 roadmap. The page exists so we can iterate on
-      the design and copy in parallel; the implementation lands next sprint.
-    </p>
+    <h1 class="h1">Heart Rate Zones</h1>
+    <p class="status mono ready">ready · v0.1</p>
+    <p class="privacy mono">All calculations run in your browser. Nothing is sent to any server.</p>
+
+    <form class="calc-form" id="hr-form" novalidate>
+      <div class="field-row">
+        <div class="field">
+          <label for="hr-age">Age (years)</label>
+          <input type="number" id="hr-age" min="10" max="100" step="1" placeholder="30" />
+          <p class="field-hint mono">Used to estimate max HR if not known.</p>
+        </div>
+        <div class="field">
+          <label for="hr-max">Max HR (optional)</label>
+          <input type="number" id="hr-max" min="100" max="250" step="1" placeholder="190" />
+          <p class="field-hint mono">Overrides age-based estimate.</p>
+        </div>
+      </div>
+      <div class="field">
+        <label for="rhr">Resting HR (optional)</label>
+        <input type="number" id="rhr" min="30" max="120" step="1" placeholder="65" />
+        <p class="field-hint mono">Enables Karvonen (heart rate reserve) method for more accurate zones.</p>
+      </div>
+      <button type="submit" class="btn">Calculate zones</button>
+    </form>
+
+    <div class="result hidden" id="hr-result" aria-live="polite">
+      <div class="hr-summary">
+        <span class="summary-item"><span class="summary-label mono">Max HR</span><span class="summary-value mono" id="max-hr-display">—</span></span>
+        <span class="summary-item"><span class="summary-label mono">Method</span><span class="summary-value mono" id="method-display">—</span></span>
+      </div>
+      <table class="zones-table">
+        <thead>
+          <tr><th>Zone</th><th>Name</th><th>% Max HR</th><th>BPM range</th><th>Benefit</th></tr>
+        </thead>
+        <tbody id="zones-body"></tbody>
+      </table>
+    </div>
   </article>
 </BaseLayout>
 
 <style>
-  .tool { padding-block: 0 2rem; }
+  .tool { padding-block: 0 2rem; max-width: 68ch; }
   .back { font-size: 12px; margin: 0 0 2rem; }
   .back a { color: var(--muted); text-decoration: none; }
   .back a:hover { color: var(--ink); }
   .h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.75rem, 4vw, 2.5rem); margin: 0 0 0.5rem; line-height: 1.1; }
-  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 2rem; }
+  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 0.5rem; }
   .status.ready { color: var(--accent); }
-  .lede { font-size: 1rem; color: var(--muted); line-height: 1.6; max-width: 56ch; }
-  .placeholder { max-width: 60ch; }
-  .placeholder p { color: var(--muted); margin: 0 0 1rem; }
-  .io {
-    width: 100%;
-    padding: 1rem;
-    background: var(--paper-2);
-    border: 1px solid var(--rule);
-    color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    resize: vertical;
-  }
-  .hint { font-size: 11px; color: var(--muted); margin-top: 0.75rem; }
+  .privacy { font-size: 11px; color: var(--muted); margin: 0 0 2rem; letter-spacing: 0.02em; border-left: 2px solid var(--rule); padding-left: 0.75rem; }
+  .calc-form { display: flex; flex-direction: column; gap: 1.25rem; max-width: 56ch; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .field { display: flex; flex-direction: column; gap: 0.375rem; }
+  .field label { font-size: 0.8125rem; font-weight: 500; color: var(--muted); }
+  .field input { padding: 0.625rem 0.75rem; background: var(--paper-2); border: 1px solid var(--rule); color: var(--ink); font-family: var(--font-mono); font-size: 0.9375rem; max-width: 180px; }
+  .field input:focus { outline: none; border-color: var(--accent); }
+  .field-hint { font-size: 11px; color: var(--muted); margin: 0.25rem 0 0; }
+  .btn { align-self: flex-start; padding: 0.625rem 1.5rem; background: var(--ink); color: var(--paper); border: none; font-family: var(--font-display); font-size: 0.9375rem; font-weight: 500; cursor: pointer; transition: opacity 120ms; }
+  .btn:hover { opacity: 0.85; }
+  .result { margin-top: 2rem; border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+  .result.hidden { display: none; }
+  .hr-summary { display: flex; gap: 2rem; margin-bottom: 1.5rem; }
+  .summary-item { display: flex; flex-direction: column; gap: 0.25rem; }
+  .summary-label { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .summary-value { font-size: 1.25rem; color: var(--ink); }
+  .zones-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .zones-table th { text-align: left; padding: 0.5rem 0.75rem; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--rule); font-weight: 500; }
+  .zones-table td { padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--rule); }
+  .zones-table .zone-num { font-family: var(--font-mono); font-weight: 600; }
+  .zones-table .zone-bpm { font-family: var(--font-mono); color: var(--ink); }
+  .zone-bar { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
 </style>
+
+<script>
+  const ZONES = [
+    { zone: 1, name: 'Recovery', minPct: 50, maxPct: 60, color: '#7dd3fc', benefit: 'Active recovery, warm-up/cool-down' },
+    { zone: 2, name: 'Fat burn', minPct: 60, maxPct: 70, color: '#4ade80', benefit: 'Aerobic base, fat oxidation' },
+    { zone: 3, name: 'Aerobic', minPct: 70, maxPct: 80, color: '#facc15', benefit: 'Endurance, cardiovascular fitness' },
+    { zone: 4, name: 'Threshold', minPct: 80, maxPct: 90, color: '#fb923c', benefit: 'Lactate threshold, speed' },
+    { zone: 5, name: 'Peak / VO2 max', minPct: 90, maxPct: 100, color: '#f87171', benefit: 'Max power, short intense efforts' },
+  ]
+
+  const form = document.getElementById('hr-form') as HTMLFormElement
+  const resultEl = document.getElementById('hr-result')!
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    const age = parseFloat((document.getElementById('hr-age') as HTMLInputElement).value)
+    const maxHRInput = parseFloat((document.getElementById('hr-max') as HTMLInputElement).value)
+    const rhr = parseFloat((document.getElementById('rhr') as HTMLInputElement).value)
+
+    let maxHR: number
+    let method: string
+    if (maxHRInput && maxHRInput > 0) {
+      maxHR = maxHRInput
+      method = 'Measured max HR'
+    } else if (age > 0) {
+      maxHR = 220 - age
+      method = 'Age-estimated (220−age)'
+    } else {
+      alert('Enter your age or measured max HR.')
+      return
+    }
+
+    const useKarvonen = rhr > 0 && rhr < maxHR
+    if (useKarvonen) method += ' + Karvonen'
+
+    document.getElementById('max-hr-display')!.textContent = `${Math.round(maxHR)} bpm`
+    document.getElementById('method-display')!.textContent = method
+
+    const tbody = document.getElementById('zones-body')!
+    tbody.innerHTML = ''
+    for (const z of ZONES) {
+      let minBPM: number, maxBPM: number
+      if (useKarvonen) {
+        const hrr = maxHR - rhr
+        minBPM = Math.round(rhr + hrr * z.minPct / 100)
+        maxBPM = Math.round(rhr + hrr * z.maxPct / 100)
+      } else {
+        minBPM = Math.round(maxHR * z.minPct / 100)
+        maxBPM = Math.round(maxHR * z.maxPct / 100)
+      }
+      const tr = document.createElement('tr')
+      tr.innerHTML = `
+        <td class="zone-num">Z${z.zone}</td>
+        <td><span class="zone-bar" style="background:${z.color}"></span>${z.name}</td>
+        <td class="zone-bpm">${z.minPct}–${z.maxPct}%</td>
+        <td class="zone-bpm">${minBPM}–${maxBPM}</td>
+        <td style="color:var(--muted);font-size:0.8125rem">${z.benefit}</td>
+      `
+      tbody.appendChild(tr)
+    }
+
+    resultEl.classList.remove('hidden')
+  })
+</script>

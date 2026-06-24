@@ -1,38 +1,132 @@
 ---
 import BaseLayout from '~/layouts/BaseLayout.astro'
 ---
-<BaseLayout title="water intake — Oriz Vitals" description="water intake — runs in your browser. Part of Oriz Vitals.">
+<BaseLayout title="Water Intake Calculator — Oriz Vitals" description="Calculate your daily water intake goal based on weight, activity, and climate. Runs entirely in your browser.">
   <article class="tool">
     <p class="back mono"><a href="/">← all tools</a></p>
-    <h1 class="h1">water intake</h1>
-    <p class="status mono">coming · v0.1</p>
-    <p class="lede">
-      This feature is on the v0.1 roadmap. The page exists so we can iterate on
-      the design and copy in parallel; the implementation lands next sprint.
-    </p>
+    <h1 class="h1">Water Intake Calculator</h1>
+    <p class="status mono ready">ready · v0.1</p>
+    <p class="privacy mono">All calculations run in your browser. Nothing is sent to any server.</p>
+
+    <form class="calc-form" id="water-form" novalidate>
+      <div class="field">
+        <label for="water-weight">Weight</label>
+        <div class="input-group">
+          <input type="number" id="water-weight" min="20" max="300" step="0.1" placeholder="70" required />
+          <select id="water-weight-unit">
+            <option value="kg" selected>kg</option>
+            <option value="lbs">lbs</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="water-activity">Activity level</label>
+        <select id="water-activity">
+          <option value="low">Sedentary (little or no exercise)</option>
+          <option value="moderate" selected>Moderately active (30–60 min/day)</option>
+          <option value="high">Very active (&gt;60 min/day)</option>
+          <option value="athlete">Athlete (2+ hrs intense training)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="climate">Climate</label>
+        <select id="climate">
+          <option value="cool">Cool / temperate</option>
+          <option value="moderate" selected>Moderate</option>
+          <option value="hot">Hot / humid</option>
+        </select>
+      </div>
+      <button type="submit" class="btn">Calculate</button>
+    </form>
+
+    <div class="result hidden" id="water-result" aria-live="polite">
+      <div class="result-main">
+        <span class="result-label mono">Daily water goal</span>
+        <span class="result-value" id="water-litres">—</span>
+        <span class="result-unit mono">litres / day</span>
+      </div>
+      <p id="water-cups" class="result-alt mono"></p>
+      <div class="breakdown">
+        <p class="breakdown-title mono">Breakdown:</p>
+        <ul class="breakdown-list" id="water-breakdown"></ul>
+      </div>
+      <p class="tip">Tip: spread intake evenly throughout the day. Thirst is a late indicator of mild dehydration.</p>
+    </div>
   </article>
 </BaseLayout>
 
 <style>
-  .tool { padding-block: 0 2rem; }
+  .tool { padding-block: 0 2rem; max-width: 56ch; }
   .back { font-size: 12px; margin: 0 0 2rem; }
   .back a { color: var(--muted); text-decoration: none; }
   .back a:hover { color: var(--ink); }
   .h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.75rem, 4vw, 2.5rem); margin: 0 0 0.5rem; line-height: 1.1; }
-  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 2rem; }
+  .status { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 0.5rem; }
   .status.ready { color: var(--accent); }
-  .lede { font-size: 1rem; color: var(--muted); line-height: 1.6; max-width: 56ch; }
-  .placeholder { max-width: 60ch; }
-  .placeholder p { color: var(--muted); margin: 0 0 1rem; }
-  .io {
-    width: 100%;
-    padding: 1rem;
-    background: var(--paper-2);
-    border: 1px solid var(--rule);
-    color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    resize: vertical;
-  }
-  .hint { font-size: 11px; color: var(--muted); margin-top: 0.75rem; }
+  .privacy { font-size: 11px; color: var(--muted); margin: 0 0 2rem; letter-spacing: 0.02em; border-left: 2px solid var(--rule); padding-left: 0.75rem; }
+  .calc-form { display: flex; flex-direction: column; gap: 1.25rem; }
+  .field { display: flex; flex-direction: column; gap: 0.375rem; }
+  .field label { font-size: 0.8125rem; font-weight: 500; color: var(--muted); }
+  .field select { padding: 0.625rem 0.75rem; background: var(--paper-2); border: 1px solid var(--rule); color: var(--ink); font-family: var(--font-mono); font-size: 0.875rem; }
+  .input-group { display: flex; }
+  .input-group input { flex: 1; padding: 0.625rem 0.75rem; background: var(--paper-2); border: 1px solid var(--rule); border-right: none; color: var(--ink); font-family: var(--font-mono); font-size: 0.9375rem; outline: none; min-width: 0; }
+  .input-group input:focus { border-color: var(--accent); }
+  .input-group select { padding: 0.625rem 0.5rem; background: var(--paper-2); border: 1px solid var(--rule); color: var(--muted); font-family: var(--font-mono); font-size: 0.8125rem; }
+  .btn { align-self: flex-start; padding: 0.625rem 1.5rem; background: var(--ink); color: var(--paper); border: none; font-family: var(--font-display); font-size: 0.9375rem; font-weight: 500; cursor: pointer; transition: opacity 120ms; }
+  .btn:hover { opacity: 0.85; }
+  .result { margin-top: 2rem; border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+  .result.hidden { display: none; }
+  .result-main { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .result-label { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .result-value { font-family: var(--font-mono); font-size: 3rem; color: var(--ink); line-height: 1; }
+  .result-unit { font-size: 0.875rem; color: var(--muted); }
+  .result-alt { font-size: 0.875rem; color: var(--muted); margin: 0 0 1.25rem; }
+  .breakdown-title { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.5rem; }
+  .breakdown-list { list-style: none; padding: 0; margin: 0 0 1.25rem; font-size: 0.875rem; color: var(--muted); }
+  .breakdown-list li { padding: 0.25rem 0; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; }
+  .breakdown-list li span { font-family: var(--font-mono); color: var(--ink); }
+  .tip { font-size: 0.8125rem; color: var(--muted); border-left: 2px solid var(--accent); padding-left: 0.75rem; margin: 0; }
 </style>
+
+<script>
+  const form = document.getElementById('water-form') as HTMLFormElement
+  const resultEl = document.getElementById('water-result')!
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    let weight = parseFloat((document.getElementById('water-weight') as HTMLInputElement).value)
+    const weightUnit = (document.getElementById('water-weight-unit') as HTMLSelectElement).value
+    const activity = (document.getElementById('water-activity') as HTMLSelectElement).value
+    const climate = (document.getElementById('climate') as HTMLSelectElement).value
+
+    if (!weight) return
+    if (weightUnit === 'lbs') weight = weight * 0.453592
+
+    // Base: ~35ml per kg
+    let baseMl = weight * 35
+
+    // Activity adjustments
+    const activityAdd: Record<string, number> = { low: 0, moderate: 350, high: 700, athlete: 1200 }
+    baseMl += activityAdd[activity] ?? 0
+
+    // Climate adjustments
+    const climateAdd: Record<string, number> = { cool: -200, moderate: 0, hot: 500 }
+    baseMl += climateAdd[climate] ?? 0
+
+    const litres = baseMl / 1000
+    const cups = Math.round(baseMl / 240) // 240ml per cup (US 8 fl oz)
+
+    document.getElementById('water-litres')!.textContent = litres.toFixed(1)
+    document.getElementById('water-cups')!.textContent = `≈ ${cups} cups (240 ml each)`
+
+    const breakdownEl = document.getElementById('water-breakdown')!
+    breakdownEl.innerHTML = `
+      <li>Base (${weight.toFixed(1)} kg × 35 ml) <span>${Math.round(weight * 35)} ml</span></li>
+      <li>Activity adjustment <span>+${activityAdd[activity]} ml</span></li>
+      <li>Climate adjustment <span>${climateAdd[climate] >= 0 ? '+' : ''}${climateAdd[climate]} ml</span></li>
+      <li><strong>Total</strong> <span><strong>${Math.round(baseMl)} ml</strong></span></li>
+    `
+
+    resultEl.classList.remove('hidden')
+  })
+</script>
